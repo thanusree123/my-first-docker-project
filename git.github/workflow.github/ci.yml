@@ -1,0 +1,41 @@
+name: Python Flask CI Pipeline
+
+# Trigger the pipeline on every git push to the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the code from your GitHub repository
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Set up a clean Python environment
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    # 3. Install dependencies (Flask) just like your Dockerfile does
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask
+
+    # 4. Optional: Run a syntax check to make sure there are no Python typos
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    # 5. Build the Docker Image to make sure the Dockerfile actually works
+    - name: Test Docker Build
+      run: |
+        docker build -t my-flask-app:${{ github.sha }} .
